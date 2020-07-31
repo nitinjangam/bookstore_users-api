@@ -3,6 +3,7 @@ package users
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/nitinjangam/bookstore_users-api/services"
 
@@ -18,11 +19,7 @@ func CreateUser(c *gin.Context) {
 	fmt.Println(user)
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//TODO: Handle error
-		restErr := errors.RestErr{
-			Message: "invalid json body",
-			Status:  http.StatusBadRequest,
-			Error:   "bad_request",
-		}
+		restErr := errors.CreateNewBadReqError("Invalid JSON data")
 		c.JSON(restErr.Status, restErr)
 		return
 	}
@@ -37,5 +34,16 @@ func CreateUser(c *gin.Context) {
 
 //GetUser function
 func GetUser(c *gin.Context) {
-	c.String(http.StatusNotImplemented, "Implement Me!")
+	userID, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	if userErr != nil {
+		err := errors.CreateNewBadReqError("Invalid user id")
+		c.JSON(err.Status, err)
+		return
+	}
+	user, getErr := services.GetUser(userID)
+	if getErr != nil {
+		c.JSON(getErr.Status, getErr)
+		return
+	}
+	c.JSON(http.StatusOK, user)
 }
